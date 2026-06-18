@@ -1,0 +1,6 @@
+atlassian-python-api
+anthropic
+openpyxl
+keyring
+requests
+Pillow

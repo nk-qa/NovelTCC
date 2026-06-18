@@ -1,0 +1,16 @@
+# PyInstaller
+_internal/
+build_tmp/
+dist/
+*.exe
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 사용자 출력 파일
+TC_Result.xlsx
+
+# 내부 관리 파일
+CLAUDE.md
