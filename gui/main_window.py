@@ -39,8 +39,6 @@ class MainWindow(tk.Tk):
                 pass
 
     def _build_ui(self):
-        pad = {"padx": 12, "pady": 6}
-
         # ── 배너 ─────────────────────────────────────
         banner_path = resource("gui/assets/banner.png")
         if banner_path.exists():
@@ -107,7 +105,7 @@ class MainWindow(tk.Tk):
         cfg = config.load_all()
         missing = []
         if not cfg.get("confluence_base_url"):
-            missing.append("Confluence URL")
+            missing.append("Confluence Base URL")
         if cfg.get("claude_mode", "cli") == "api" and not cfg.get("claude_api_key"):
             missing.append("Claude API Key")
         if missing:
@@ -211,10 +209,9 @@ class MainWindow(tk.Tk):
                 self.after(0, lambda: self.log("xlsx 파일 작성 중인 것입니다!"))
                 saved_path = write_tc(tc_list, output, title)
                 self.after(0, lambda: self.log(f"  ✔ 저장 완료된 것입니다!: {saved_path}"))
-                _path = saved_path
                 self.after(0, lambda: show_info(
                     self, "사건 해결인 것입니다!", f"테스트 케이스 {len(tc_list)}개를 설계한 것입니다!",
-                    action=("파일 위치 열기", lambda: subprocess.Popen(f'explorer /select,"{_path}"', shell=True))
+                    action=("파일 위치 열기", lambda: subprocess.Popen(f'explorer /select,"{saved_path}"', shell=True))
                 ))
 
             except Exception as e:

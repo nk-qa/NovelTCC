@@ -1,6 +1,7 @@
 """
 Claude 연동 모듈 - API Key 방식 / Claude Code CLI 방식 지원
 """
+import base64
 import json
 import os
 import re
@@ -107,21 +108,65 @@ def _parse_response(raw: str) -> list[dict]:
 
 # ── API Key 방식 ──────────────────────────────────────────────────────────────
 
+def _count_complete_objects(text: str) -> int:
+    """스트리밍 버퍼에서 완성된 JSON 객체 수 반환 (진행률 표시용)"""
+    count = 0
+    depth = 0
+    in_str = False
+    esc = False
+    for ch in text:
+        if esc:
+            esc = False
+            continue
+        if ch == '\\' and in_str:
+            esc = True
+            continue
+        if ch == '"':
+            in_str = not in_str
+            continue
+        if in_str:
+            continue
+        if ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0:
+                count += 1
+    return count
+
+
 def generate_tc_api(api_key: str, title: str, content: str, extra_prompt: str = "", on_progress=None) -> list[dict]:
     client = anthropic.Anthropic(api_key=api_key)
     if on_progress:
-        on_progress("Claude API 호출 중인 것입니다!")
+        on_progress("Claude API 스트리밍 시작인 것입니다!")
 
-    response = client.messages.create(
+    full_text = ""
+    last_reported = 0
+    chars_since_check = 0
+
+    with client.messages.stream(
         model="claude-sonnet-4-6",
         max_tokens=16000,
         system=SYSTEM_PROMPT + extra_prompt,
         messages=[{"role": "user", "content": _build_user_message(title, content)}],
-    )
+    ) as stream:
+        for delta in stream.text_stream:
+            full_text += delta
+            chars_since_check += len(delta)
+            # 50자마다 완성된 TC 객체 수 체크 → 변화 있을 때만 알림
+            if chars_since_check >= 50:
+                chars_since_check = 0
+                tc_count = _count_complete_objects(full_text)
+                if on_progress and tc_count > last_reported:
+                    last_reported = tc_count
+                    on_progress(f"TC {tc_count}개 작성 중인 것입니다...")
+
+    if not full_text:
+        raise ValueError("Claude API 응답이 비어있는 것입니다.")
 
     if on_progress:
         on_progress("응답 파싱 중인 것입니다!")
-    return _parse_response(response.content[0].text)
+    return _parse_response(full_text)
 
 
 def test_api_key(api_key: str) -> tuple[bool, str]:
@@ -243,7 +288,6 @@ def test_cli() -> tuple[bool, str]:
 
 def describe_image(api_key: str, image_bytes: bytes, media_type: str, filename: str) -> str:
     """claude-haiku로 이미지를 QA 관점 텍스트로 요약"""
-    import base64
     client = anthropic.Anthropic(api_key=api_key)
     resp = client.messages.create(
         model="claude-haiku-4-5-20251001",

@@ -180,7 +180,8 @@ class ConfluenceClient:
         # HTML 엔티티 (먼저 &nbsp; → 일반 공백, 나머지는 html.unescape로 일괄 처리)
         text = text.replace("&nbsp;", " ")
         text = _html.unescape(text)
-        # 연속 공백/줄바꿈 정리
+        # 연속 공백/줄바꿈 정리 및 각 줄 앞뒤 공백 제거
         text = re.sub(r"\n{3,}", "\n\n", text)
         text = re.sub(r"[ \t]+", " ", text)
+        text = "\n".join(line.strip() for line in text.splitlines())
         return text.strip()

@@ -23,10 +23,10 @@ COL_비고 = 15     # O (O~P 수평 병합)
 
 # 각 데이터 행에서 복원해야 할 수평 병합 범위 (start_col, end_col)
 _ROW_H_MERGES = [
-    (COL_확인항목, 10),  # G~J
-    (COL_결과,     12),  # K~L
-    (COL_JIRA,     14),  # M~N
-    (COL_비고,     16),  # O~P
+    (COL_확인항목, COL_확인항목 + 3),  # G~J
+    (COL_결과,     COL_결과     + 1),  # K~L
+    (COL_JIRA,     COL_JIRA     + 1),  # M~N
+    (COL_비고,     COL_비고     + 1),  # O~P
 ]
 
 DATA_START_ROW = 17
@@ -90,6 +90,10 @@ def write_tc(tc_list: list[dict], output_path: str, page_title: str = "") -> str
                     COL_확인항목, COL_결과, COL_JIRA, COL_비고]:
             ws.cell(row=row, column=col).value = None
 
+    if not tc_list:
+        wb.save(output_path)
+        return output_path
+
     # TC 데이터 입력
     for i, tc in enumerate(tc_list):
         row = DATA_START_ROW + i
@@ -106,10 +110,6 @@ def write_tc(tc_list: list[dict], output_path: str, page_title: str = "") -> str
             cell = ws.cell(row=row, column=col)
             if not isinstance(cell, MergedCell):
                 cell.alignment = Alignment(wrap_text=True, vertical="center")
-
-    if not tc_list:
-        wb.save(output_path)
-        return output_path
 
     n = len(tc_list)
     last_row = DATA_START_ROW + n - 1

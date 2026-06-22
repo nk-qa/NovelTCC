@@ -14,6 +14,12 @@ try:
 except Exception:
     pass
 
+# 작업 표시줄 아이콘을 Python 기본 아이콘 대신 앱 아이콘으로 표시
+try:
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("SHIFTUP.NovelTCC.1")
+except Exception:
+    pass
+
 from gui.main_window import MainWindow
 from gui.splash import show_splash
 
